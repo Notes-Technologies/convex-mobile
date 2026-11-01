@@ -26,7 +26,7 @@ mkdir -p "$staging" "$output/macos"
 cargo run --locked --release --target "$(rustc -vV | sed -n 's/^host: //p')" \
   --features=uniffi/cli --bin uniffi-bindgen -- generate \
   --library target/aarch64-apple-darwin/release/libconvexmobile.dylib \
-  --language swift --out-dir "$staging"
+  --language swift --no-format --out-dir "$staging"
 
 # Never pair a new Rust ABI with stale generated Swift bindings.
 cmp "$staging/convexmobile.swift" "$swift_root/Sources/UniFFI/convexmobile.swift"
