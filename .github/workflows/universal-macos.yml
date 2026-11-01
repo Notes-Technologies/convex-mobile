@@ -26,9 +26,10 @@ jobs:
         run: |
           if ! command -v rustup >/dev/null; then
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --no-modify-path --default-toolchain none
+            export PATH="$HOME/.cargo/bin:$PATH"
           fi
-          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
-          "$HOME/.cargo/bin/rustup" show
+          rustup show
+          dirname "$(rustup which cargo)" >> "$GITHUB_PATH"
       - name: Build and verify universal XCFramework
         run: bash rust/build-macos.sh
       - name: Test the Rust core
