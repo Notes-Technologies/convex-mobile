@@ -1,0 +1,46 @@
+name: Universal macOS SDK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [koori-universal-macos]
+    paths: ['rust/**', '.github/workflows/universal-macos.yml']
+  pull_request:
+    paths: ['rust/**', '.github/workflows/universal-macos.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: true
+      - name: Install CMake
+        run: brew list cmake || brew install cmake
+      - name: Install the pinned Rust toolchain
+        working-directory: rust
+        run: |
+          if ! command -v rustup >/dev/null; then
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --no-modify-path --default-toolchain none
+          fi
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+          "$HOME/.cargo/bin/rustup" show
+      - name: Build and verify universal XCFramework
+        run: bash rust/build-macos.sh
+      - name: Test the Rust core
+        working-directory: rust
+        env:
+          MACOSX_DEPLOYMENT_TARGET: '14.0'
+        run: cargo test --locked --lib --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: convex-universal-macos-sdk
+          if-no-files-found: error
+          path: |
+            rust/target/koori-sdk/libconvexmobile-rs.xcframework.zip
+            rust/target/koori-sdk/checksum.txt
+            rust/target/koori-sdk/build-info.json
